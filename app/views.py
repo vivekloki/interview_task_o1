@@ -1,6 +1,6 @@
-from django.db.models import Q
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q  # Import Q for complex queries
 from .models import BooksBook
 from .serializers import BooksBookSerializer
 
@@ -16,39 +16,8 @@ class BookListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        filters = {}
-
-        # Book ID numbers specified as Project Gutenberg ID numbers
-        book_ids = self.request.query_params.get('book_ids')
-        if book_ids:
-            filters['gutenberg_id__in'] = book_ids.split(',')
-
-        # Language
-        languages = self.request.query_params.get('language')
-        if languages:
-            filters['booksbooklanguages_set_languagecode_in'] = languages.split(',')
-
-        # Mime-type
-        mime_types = self.request.query_params.get('mime_type')
-        if mime_types:
-            filters['booksformat_set_mime_type_in'] = mime_types.split(',')
-
-        # Topic (subject or bookshelf) - Case-insensitive partial matches
-        topic = self.request.query_params.get('topic')
-        if topic:
-            filters['$or'] = [
-                {'booksbooksubjects_set_subjectname_icontains': topic},
-                {'booksbookbookshelves_set_bookshelfname_icontains': topic},
-            ]
-
-        # Author - Case-insensitive partial matches
-        author = self.request.query_params.get('author')
-        if author:
-            filters['booksbookauthors_set_authorname_icontains'] = author
-
-        # Title - Case-insensitive partial matches
-        title = self.request.query_params.get('title')
-        if title:
-            filters['title__icontains'] = title
-
-        return queryset.filter(**filters)
+        book_id = self.request.query_params.get('book_id', None)
+        if book_id is not None:
+            # Filter queryset based on Book ID
+            queryset = queryset.filter(id=book_id)
+        return queryset
